@@ -3,7 +3,12 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
   const Todo = sequelize.define('Todo', {
     title: DataTypes.STRING,
-    userId: DataTypes.INTEGER
+    userId: DataTypes.INTEGER,
+    status: {
+      type: DataTypes.ENUM('pending', 'done'),
+      defaultValue: 'pending',
+      allowNull: false
+    }
   }, {});
   Todo.associate = (models) => {
     Todo.belongsTo(models.User, {
