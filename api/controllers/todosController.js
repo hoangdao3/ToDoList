@@ -16,11 +16,17 @@ const todos = {
 
   async fetchAll({ decoded, query }, res, next) {
     try {
-      const { skip, take } = query;
+      const { skip, take, status } = query;
       const pageSkip = skip ? parseInt(skip, 10) : 0;
       const pageTake = take ? parseInt(take, 10) : 10;
+
+      const whereCondition = { userId: decoded.userId };
+      if (status) {
+        whereCondition.status = status;
+      }
+
       const myTodos = await Todo.findAll({
-        where: { userId: decoded.userId },
+        where: whereCondition,
         include: [{
           model: TodoItem,
           as: 'todoItems'
@@ -57,13 +63,13 @@ const todos = {
       if (!todo) {
         return res.status(400).send({ error: 'Wrong todo id' });
       }
-      const updatedTodo = await Todo.update({ title: body.title || todo.title },
-        {
-          where: { id: todo.id },
-          returning: true,
-          plain: true
-        },);
-      return res.status(200).send(updatedTodo[1]);
+
+      const updatedTodo = await todo.update({
+        title: body.title || todo.title,
+        status: body.status || todo.status
+      });
+
+      return res.status(200).send(updatedTodo);
     } catch (e) {
       return next(new Error(e));
     }

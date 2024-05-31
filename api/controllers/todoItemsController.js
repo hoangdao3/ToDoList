@@ -18,14 +18,15 @@ const todoItems = {
 
   async fetchAll(req, res, next) {
     try {
-      const { todoId, take, skip } = req.params;
+      const { todoId, take, skip, status } = req.params;
       if (!todoId) { return res.status(400).send({ error: 'todoId is required' }); }
 
       const limit = 1 * take || 10;
       const offset = 1 * skip || 0;
+      const statusCondition = status ? { isCompleted: status === 'done' } : {};
 
       const items = await TodoItem.findAll({
-        where: { todoId },
+        where: { todoId, ...statusCondition },
         include: [{
           model: Todo,
           as: 'todo'
