@@ -19,7 +19,6 @@ const todos = {
       const { skip, take } = query;
       const pageSkip = skip ? parseInt(skip, 10) : 0;
       const pageTake = take ? parseInt(take, 10) : 10;
-  
       const myTodos = await Todo.findAll({
         where: { userId: decoded.userId },
         include: [{
@@ -29,14 +28,11 @@ const todos = {
         limit: pageTake,
         offset: pageSkip
       });
-  
       return res.status(200).send(myTodos);
     } catch (e) {
       return next(new Error(e));
     }
   },
-  
-
   async fetchOne({ params, decoded }, res, next) {
     try {
       const myTodo = await Todo.findOne({
