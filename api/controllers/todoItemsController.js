@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-newline */
 const models = require('../models');
 
 const { TodoItem, Todo } = models;
