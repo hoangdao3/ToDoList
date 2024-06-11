@@ -6,15 +6,16 @@ const { config } = require('dotenv');
 config();
 
 const jwtToken = {
-  createToken({ id, email }) {
+  createToken({ id }) {
     return jwt.sign(
-      { userId: id, email },
+      { userId: id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
   },
   verifyToken(token) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET, { expiresIn: '24h' });
+    console.log(decoded);
     return decoded;
   }
 };

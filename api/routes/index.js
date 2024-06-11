@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 const auth = require('../controllers/authController');
-const validateAuth = require('../middlewares/auth');
+const validateAuth = require('../middlewares/validate');
 const todos = require('../controllers/todosController');
 const authorize = require('../middlewares/authorize');
 const todoItems = require('../controllers/todoItemsController');
@@ -13,13 +13,14 @@ module.exports = {
     app.post('/api/auth/sign_up', validateAuth, auth.signUp);
     app.post('/api/auth/sign_in', auth.signIn);
     app.post('/api/auth/forgot_password', auth.sendResetLink);
-    app.post('/reset_password/:token', auth.resetPassword);
+    app.post('/api/reset_password', authorize, auth.resetPassword);
 
     app.post('/api/todos', authorize, todos.create);
     app.get('/api/todos', authorize, todos.fetchAll);
     app.get('/api/todos/:todoId', authorize, todos.fetchOne);
     app.put('/api/todos/:todoId', authorize, todos.update);
     app.delete('/api/todos/:todoId', authorize, todos.delete);
+    // app.get('/api/todos/fill', authorize, todos.fillStatus);
 
     app.post('/api/todoItems', todoItems.create);
     app.get('/api/todos/:todoId/todoItems', todoItems.fetchAll);

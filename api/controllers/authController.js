@@ -33,6 +33,7 @@ const auth = {
       return res.status(400).send({ error: 'Invalid email/password combination' });
     } catch (e) {
       // Log the error for debugging purposes
+      // eslint-disable-next-line no-console
       console.error('Error in signIn:', e);
       // Pass the error to the error handling middleware
       return next(new Error(e));
@@ -70,24 +71,21 @@ const auth = {
 
   async resetPassword(req, res, next) {
     try {
-      const { password } = req.body;
-      const { token } = req.params;
-      const decoded = jwtToken.verifyToken(token);
-      const hash = hashPassword(password);
-      const updatedUser = await User.update(
-        { password: hash },
-        {
-          where: { id: decoded.userId },
-          returning: true,
-          plain: true,
-        }
-      );
-      const { id, name, email } = updatedUser[1];
-      return res.status(200).send({ token, user: { id, name, email } });
+      const { newPassword, confirmPassword } = req.body;
+      const { userId } = req.userFound;
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).send({ error: 'User not found' });
+      }
+      if (newPassword !== confirmPassword) {
+        return res.status(400).send('New password and confirm password do not match!');
+      }
+      const hash = hashPassword(newPassword);
+      await user.update({ password: hash });
+      return res.status(200).send({ message: 'Password successfully updated' });
     } catch (e) {
       return next(new Error(e));
     }
   }
 };
-
 module.exports = auth;

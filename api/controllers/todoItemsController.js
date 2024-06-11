@@ -18,8 +18,10 @@ const todoItems = {
   },
 
   async fetchAll(req, res, next) {
+    console.log('abc')
     try {
-      const { todoId, take, skip, status } = req.params;
+      const { take, skip, status } = req.params;
+      const { todoId } = req.userFound;
       if (!todoId) { return res.status(400).send({ error: 'todoId is required' }); }
 
       const limit = 1 * take || 10;
