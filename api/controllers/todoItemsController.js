@@ -18,18 +18,17 @@ const todoItems = {
   },
 
   async fetchAll(req, res, next) {
-    console.log('abc')
     try {
-      const { take, skip, status } = req.params;
-      const { todoId } = req.userFound;
-      if (!todoId) { return res.status(400).send({ error: 'todoId is required' }); }
-
-      const limit = 1 * take || 10;
-      const offset = 1 * skip || 0;
-      const statusCondition = status ? { isCompleted: status === 'done' } : {};
-
+      const { query } = req;
+      const { take, skip, todoId } = query;
+      const { id: userId } = req.user;
+      if (!userId) {
+        return res.status(400).send({ error: 'User ID is required' });
+      }
+      const limit = parseInt(take, 10) || 10;
+      const offset = parseInt(skip, 10) || 0;
       const items = await TodoItem.findAll({
-        where: { todoId, ...statusCondition },
+        where: { todoId },
         include: [{
           model: Todo,
           as: 'todo'
@@ -37,36 +36,42 @@ const todoItems = {
         limit,
         offset
       });
+
       return res.status(200).send(items);
     } catch (e) {
-      return next(new Error(e));
+      return next(new Error(e.message));
     }
   },
-
-  async fetchOne(req, res, next) {
+  async fetchOne({ params }, res, next) {
     try {
-      const { todoItemId } = req.params;
-      if (!todoItemId) { return res.status(400).send({ error: 'todoItemId is required' }); }
-      const items = await TodoItem.findOne({
-        where: { id: todoItemId },
-        include: [{
-          model: Todo,
-          as: 'todo'
-        }],
+
+      const myTodo = await TodoItem.findOne({
+        where: { id: params.todoItemId },
+        include: [
+          {
+            model: Todo,
+            as: 'todo'
+          },
+        ],
       });
-      return res.status(200).send(items);
+      if (!myTodo) {
+        return res.status(404).send({ error: 'TodoItem not found' });
+      }
+      return res.status(200).send(myTodo);
     } catch (e) {
+      console.error('Error:', e);
       return next(new Error(e));
     }
   },
 
-  async update(req, res, next) {
+  async update({ body, params }, res, next) {
     try {
-      const { text, isCompleted } = req.body;
-      const { todoItemId } = req.params;
-      if (!todoItemId) { return res.status(400).send({ error: 'todoItemId is required' }); }
+      const { text, isCompleted } = body;
+      if (!params.todoItemId) {
+        return res.status(400).send({ error: 'todoItemId is required' });
+      }
       const item = await TodoItem.findOne({
-        where: { id: todoItemId },
+        where: { id: params.todoItemId },
       });
       if (!item) {
         return res.status(404).send({ error: 'Item does not exist' });
@@ -74,23 +79,23 @@ const todoItems = {
       const updatedItem = await TodoItem.update(
         { text: text || item.text, isCompleted },
         {
-          where: { id: req.params.todoItemId },
+          where: { id: params.todoItemId },
           returning: true,
           plain: true,
         }
       );
-      return res.status(200).send(updatedItem[1]);
+      console.log(updatedItem)
+      return res.status(200).send({message: 'update complete'});
     } catch (e) {
       return next(new Error(e));
     }
   },
 
-  async delete(req, res, next) {
+  async delete({ params }, res, next) {
     try {
-      const { todoItemId } = req.params;
-      if (!todoItemId) { return res.status(400).send({ error: 'todoItemId is required' }); }
+      if (!params.todoItemId) { return res.status(400).send({ error: 'todoItemId is required' }); }
       const item = await TodoItem.findOne({
-        where: { id: todoItemId },
+        where: { id: params.todoItemId },
       });
       if (!item) {
         return res.status(404).send({ error: 'Item does not exist' });

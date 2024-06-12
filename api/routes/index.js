@@ -22,11 +22,11 @@ module.exports = {
     app.delete('/api/todos/:todoId', authorize, todos.delete);
     // app.get('/api/todos/fill', authorize, todos.fillStatus);
 
-    app.post('/api/todoItems', todoItems.create);
-    app.get('/api/todos/:todoId/todoItems', todoItems.fetchAll);
-    app.get('/api/todoItems/:todoItemId', todoItems.fetchOne);
-    app.put('/api/todoItems/:todoItemId', todoItems.update);
-    app.delete('/api/todoItems/:todoItemId', todoItems.delete);
+    app.post('/api/todoItems', authorize, todoItems.create);
+    app.get('/api/todoItems', authorize, todoItems.fetchAll);
+    app.get('/api/todoItems/:todoItemId', authorize, todoItems.fetchOne);
+    app.put('/api/todoItems/:todoItemId', authorize, todoItems.update);
+    app.delete('/api/todoItems/:todoItemId', authorize, todoItems.delete);
     app.get('/users', async (req, res) => {
       try {
         const users = await db.User.findAll({

@@ -4,11 +4,11 @@ const models = require('../models');
 const { Todo, TodoItem } = models;
 
 const todos = {
-  async create({ body, userFound }, res, next) {
+  async create(req, res, next) {
     try {
-      const { title } = body;
-      const { id } = userFound;
-      const todo = await Todo.create({ title, id });
+      const { title } = req.body;
+      const { id: userId } = req.user;
+      const todo = await Todo.create({ title, userId });
       return res.status(201).send(todo);
     } catch (e) {
       return next(new Error(e));
@@ -18,14 +18,14 @@ const todos = {
   async fetchAll(req, res, next) {
     try {
       const { query } = req;
+      console.log('1')
       const {
         skip, take, status, name, sortBy, sortOrder
       } = query;
-      const { id } = req.user;
-      console.log(req.user)
+      const { id: userId } = req.user;
       const pageSkip = skip ? parseInt(skip, 10) : 0;
       const pageTake = take ? parseInt(take, 10) : 10;
-      const whereCondition = { id };
+      const whereCondition = { userId };
       if (status) {
         whereCondition.status = status;
       }
@@ -58,11 +58,10 @@ const todos = {
       return next(new Error(e));
     }
   },
-
-  async fetchOne({ params, userFound }, res, next) {
+  async fetchOne({ params }, res, next) {
     try {
       const myTodo = await Todo.findOne({
-        where: { id: params.todoId, id: userFound.id },
+        where: { id: params.todoId },
         include: [
           {
             model: TodoItem,
@@ -75,69 +74,50 @@ const todos = {
       }
       return res.status(200).send(myTodo);
     } catch (e) {
+      console.error('Error:', e);
       return next(new Error(e));
     }
   },
 
-  async update({ body, userFound, params }, res, next) {
+  async update(req, res, next) {
     try {
+      const { todoId } = req.params;
+      const { id: userId } = req.user;
+      const { title, status } = req.body;
       const todo = await Todo.findOne({
-        where: { id: params.todoId, id: userFound.id },
+        where: { id: todoId, userId },
       });
+
       if (!todo) {
-        return res.status(400).send({ error: 'Wrong todo id' });
+        return res.status(404).send({ error: 'Todo not found' });
       }
-
       const updatedTodo = await todo.update({
-        title: body.title || todo.title,
-        status: body.status || todo.status,
+        title: title || todo.title,
+        status: status || todo.status,
       });
-
       return res.status(200).send(updatedTodo);
     } catch (e) {
-      return next(new Error(e));
+      return next(new Error(e.message));
     }
   },
 
-  async delete({ params, userFound }, res, next) {
+  async delete(req, res, next) {
     try {
+      const { todoId } = req.params;
+      const { id: userId } = req.user;
       const todo = await Todo.findOne({
-        where: { id: params.todoId, id: userFound.id },
+        where: { id: todoId, userId },
       });
       if (!todo) {
-        return res.status(400).send({ error: 'Wrong todo id' });
+        return res.status(404).send({ error: 'Todo not found' });
       }
       await todo.destroy();
-      return res.status(200).send({});
+      return res.status(200).send({ message: 'Todo deleted successfully' });
     } catch (e) {
-      return next(new Error(e));
+      return next(new Error(e.message));
     }
   },
 
-  async fillStatus(req, res, next) {
-    try {
-      const { isCompleted } = req.query;
-      if (typeof isCompleted === 'undefined') {
-        return res
-          .status(400)
-          .send({ error: 'isCompleted query parameter is required' });
-      }
-      const whereCondition = { isCompleted: isCompleted === 'true' };
-      const todoFound = await Todo.findAll({
-        include: [
-          {
-            model: TodoItem,
-            as: 'todoItems',
-            where: whereCondition,
-          },
-        ],
-      });
-
-      return res.status(200).send(todoFound);
-    } catch (e) {
-      return next(e);
-    }
-  },
 };
 
 module.exports = todos;

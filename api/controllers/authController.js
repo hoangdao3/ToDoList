@@ -1,3 +1,4 @@
+/* eslint-disable semi */
 const validator = require('validator');
 const sendEmail = require('../utils/sendEmail');
 const models = require('../models');
@@ -72,8 +73,8 @@ const auth = {
   async resetPassword(req, res, next) {
     try {
       const { newPassword, confirmPassword } = req.body;
-      const { userId } = req.userFound;
-      const user = await User.findByPk(userId);
+      const { id } = req.user;
+      const user = await User.findByPk(id);
       if (!user) {
         return res.status(404).send({ error: 'User not found' });
       }
